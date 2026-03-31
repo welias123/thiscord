@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ThisCord &mdash; The Discord You Actually Wanted</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    /* ============================
+       RESET & BASE
+    ============================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #050505;
+      --bg-2: #0a0a0f;
+      --bg-card: #111118;
+      --blurple: #5865F2;
+      --blurple-dim: #4752c4;
+      --cyan: #00d4ff;
+      --cyan-dim: #00a8cc;
+      --text: #e8e8f0;
+      --text-muted: #8888aa;
+      --border-soft: rgba(255,255,255,0.06);
+      --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    ::selection { background: rgba(88,101,242,0.35); color: #fff; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ============================
+       UTILITY
+    ============================ */
+    .container { width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #fff 0%, var(--blurple) 45%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(88,101,242,0.12);
+      border: 1px solid rgba(88,101,242,0.3);
+      color: var(--blurple);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 13px 26px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .btn::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0); transition: var(--transition); }
+    .btn:hover::after { background: rgba(255,255,255,0.07); }
+
+    .btn-primary {
+      background: var(--blurple);
+      color: #fff;
+      box-shadow: 0 0 30px rgba(88,101,242,0.35), 0 4px 15px rgba(88,101,242,0.2);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 45px rgba(88,101,242,0.5), 0 8px 25px rgba(88,101,242,0.3); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid var(--border-soft);
+      backdrop-filter: blur(8px);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+
+    .btn-cyan {
+      background: linear-gradient(135deg, var(--cyan-dim), var(--cyan));
+      color: #000;
+      box-shadow: 0 0 30px rgba(0,212,255,0.3), 0 4px 15px rgba(0,212,255,0.15);
+    }
+    .btn-cyan:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(0,212,255,0.45), 0 8px 25px rgba(0,212,255,0.25); }
+
+    .section-header { text-align: center; margin-bottom: 64px; }
+    .section-header h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 16px; }
+    .section-header p { color: var(--text-muted); font-size: 17px; max-width: 540px; margin: 0 auto; }
+
+    .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+    .reveal-delay-6 { transition-delay: 0.6s; }
+
+    /* ============================
+       NAVIGATION
+    ============================ */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      transition: background var(--transition), border-color var(--transition);
+      border-bottom: 1px solid transparent;
+    }
+    nav.scrolled {
+      background: rgba(5,5,5,0.85);
+      border-bottom-color: var(--border-soft);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; gap: 32px; }
+    .nav-logo { font-size: 20px; font-weight: 800; letter-spacing: -0.04em; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .nav-logo .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--blurple), var(--cyan));
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 16px rgba(88,101,242,0.4);
+    }
+    .nav-links { display: flex; align-items: center; gap: 6px; list-style: none; flex: 1; justify-content: center; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--text-muted); padding: 7px 14px; border-radius: 8px; transition: var(--transition); }
+    .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+    .nav-cta { flex-shrink: 0; }
+    .nav-cta .btn { padding: 9px 20px; font-size: 14px; }
+    .nav-hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
+    .nav-hamburger span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: var(--transition); }
+    .mobile-menu {
+      position: fixed; top: 68px; left: 0; right: 0;
+      background: rgba(5,5,5,0.97);
+      border-bottom: 1px solid var(--border-soft);
+      backdrop-filter: blur(20px);
+      z-index: 999;
+      padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 4px;
+      transform: translateY(-110%); opacity: 0;
+      transition: var(--transition);
+      pointer-events: none;
+    }
+    .mobile-menu.open { transform: translateY(0); opacity: 1; pointer-events: all; }
+    .mobile-menu a { display: block; padding: 12px 16px; font-size: 15px; font-weight: 500; color: var(--text-muted); border-radius: 10px; transition: var(--transition); }
+    .mobile-menu a:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .mobile-menu .btn { width: 100%; justify-content: center; margin-top: 8px; }
+
+    /* ============================
+       HERO
+    ============================ */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      padding-top: 68px;
+    }
+    .hero-orb { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; animation: orb-float 12s ease-in-out infinite; }
+    .hero-orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(88,101,242,0.22) 0%, transparent 70%); top: -100px; left: -150px; animation-delay: 0s; }
+    .hero-orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%); top: 100px; right: -100px; animation-delay: -4s; }
+    .hero-orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(88,101,242,0.12) 0%, transparent 70%); bottom: -100px; left: 40%; animation-delay: -8s; }
+    @keyframes orb-float { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-30px) scale(1.05); } }
+
+    #particle-canvas { position: absolute; inset: 0; pointer-events: none; opacity: 0.6; }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(88,101,242,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(88,101,242,0.05) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; z-index: 2; text-align: center; max-width: 860px; padding: 60px 24px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(88,101,242,0.1); border: 1px solid rgba(88,101,242,0.25);
+      color: #a0aaff; font-size: 13px; font-weight: 500;
+      padding: 7px 16px; border-radius: 100px; margin-bottom: 32px;
+      backdrop-filter: blur(8px);
+    }
+    .hero-badge .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan); box-shadow: 0 0 8px var(--cyan);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.8); } }
+
+    .hero-title { font-size: clamp(60px, 10vw, 120px); font-weight: 900; letter-spacing: -0.05em; line-height: 0.95; margin-bottom: 10px; }
+    .hero-subtitle { font-size: clamp(22px, 3vw, 34px); font-weight: 300; color: var(--text-muted); margin-bottom: 12px; letter-spacing: -0.02em; }
+    .hero-tagline { font-size: clamp(15px, 1.8vw, 19px); color: #6666aa; margin-bottom: 52px; }
+
+    .hero-actions { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; margin-bottom: 64px; }
+    .hero-actions .btn { padding: 16px 32px; font-size: 16px; }
+
+    .hero-stats { display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap; padding-top: 32px; border-top: 1px solid var(--border-soft); }
+    .stat-value { font-size: 28px; font-weight: 800; letter-spacing: -0.04em; background: linear-gradient(135deg, #fff, var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 2px; text-align: center; }
+
+    .scroll-indicator {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: var(--text-muted); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      animation: scroll-bounce 2.5s ease-in-out infinite;
+    }
+    @keyframes scroll-bounce { 0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.5; } 50% { transform: translateX(-50%) translateY(6px); opacity: 1; } }
+
+    /* ============================
+       FEATURES
+    ============================ */
+    #features { padding: 120px 0; background: var(--bg-2); position: relative; }
+    #features::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--blurple), transparent); opacity: 0.4; }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1px; background: var(--border-soft);
+      border: 1px solid var(--border-soft); border-radius: 20px; overflow: hidden;
+    }
+    .feature-card { background: var(--bg-card); padding: 36px 32px; position: relative; transition: var(--transition); }
+    .feature-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(88,101,242,0.04) 0%, transparent 60%); opacity: 0; transition: var(--transition); }
+    .feature-card:hover { background: #13131e; }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px; font-size: 22px;
+    }
+    .feature-icon.blurple { background: rgba(88,101,242,0.15); border: 1px solid rgba(88,101,242,0.25); }
+    .feature-icon.cyan { background: rgba(0,212,255,0.12); border: 1px solid rgba(0,212,255,0.2); }
+    .feature-icon.green { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.2); }
+    .feature-icon.orange { background: rgba(251,146,60,0.12); border: 1px solid rgba(251,146,60,0.2); }
+    .feature-icon.purple { background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.2); }
+    .feature-icon.pink { background: rgba(244,114,182,0.12); border: 1px solid rgba(244,114,182,0.2); }
+
+    .feature-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.02em; }
+    .feature-desc { font-size: 14px; color: var(--text-muted); line-height: 1.65; }
+    .feature-tag { display: inline-block; margin-top: 16px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cyan); opacity: 0.7; }
+
+    /* ============================
+       TECH SPECS
+    ============================ */
+    #tech-specs { padding: 120px 0; background: var(--bg); }
+
+    .specs-container { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+
+    .specs-table-wrap { background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 20px; overflow: hidden; }
+    .specs-table-header { display: grid; grid-template-columns: 1fr 1fr 1fr; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-soft); }
+    .specs-table-header div { padding: 14px 20px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+    .specs-table-header div:not(:last-child) { border-right: 1px solid var(--border-soft); }
+    .specs-table-header .col-thiscord { color: var(--blurple); }
+    .specs-row { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 1px solid var(--border-soft); transition: var(--transition); }
+    .specs-row:last-child { border-bottom: none; }
+    .specs-row:hover { background: rgba(255,255,255,0.02); }
+    .specs-cell { padding: 16px 20px; font-size: 14px; display: flex; align-items: center; }
+    .specs-cell:not(:last-child) { border-right: 1px solid var(--border-soft); }
+    .specs-cell.label { color: var(--text-muted); font-weight: 500; }
+    .specs-cell.discord-val { color: #ff6b6b; }
+    .specs-cell.thiscord-val { color: #4ade80; font-weight: 600; }
+
+    .specs-side { display: flex; flex-direction: column; gap: 16px; }
+    .compat-card, .perf-card { background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 16px; padding: 24px; }
+    .compat-card h4, .perf-card h4 { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; }
+    .perf-card h4 { margin-bottom: 20px; }
+    .compat-list { display: flex; flex-direction: column; gap: 10px; }
+    .compat-item { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; }
+    .compat-item .os-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .compat-item .os-icon.win { background: rgba(0,120,215,0.15); border: 1px solid rgba(0,120,215,0.25); }
+    .compat-item .os-icon.linux { background: rgba(255,200,50,0.1); border: 1px solid rgba(255,200,50,0.2); }
+    .compat-badge { margin-left: auto; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px; background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.2); color: #4ade80; }
+
+    .perf-bar-group { display: flex; flex-direction: column; gap: 14px; }
+    .perf-bar-label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+    .perf-bar-label span:last-child { color: var(--text-muted); }
+    .perf-bar-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 100px; overflow: hidden; }
+    .perf-bar-fill { height: 100%; border-radius: 100px; transition: width 1.5s cubic-bezier(0.4,0,0.2,1); width: 0; }
+    .perf-bar-fill.blurple { background: linear-gradient(90deg, var(--blurple-dim), var(--blurple)); }
+    .perf-bar-fill.cyan { background: linear-gradient(90deg, var(--cyan-dim), var(--cyan)); }
+    .perf-bar-fill.green { background: linear-gradient(90deg, #16a34a, #4ade80); }
+
+    /* ============================
+       WHY THISCORD
+    ============================ */
+    #why-thiscord { padding: 120px 0; background: var(--bg-2); position: relative; overflow: hidden; }
+    #why-thiscord::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); opacity: 0.3; }
+
+    .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+
+    .why-terminal { background: #0c0c14; border: 1px solid var(--border-soft); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04); }
+    .terminal-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-soft); }
+    .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-dot.red { background: #ff5f57; }
+    .terminal-dot.yellow { background: #ffbd2e; }
+    .terminal-dot.green { background: #28c840; }
+    .terminal-title { font-size: 12px; color: var(--text-muted); margin-left: 8px; }
+    .terminal-body { padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px; line-height: 1.8; }
+    .t-comment { color: #444466; }
+    .t-prompt { color: var(--blurple); }
+    .t-cmd { color: var(--text); }
+    .t-output { color: var(--text-muted); }
+    .t-success { color: #4ade80; }
+    .t-cyan { color: var(--cyan); }
+    .t-cursor { display: inline-block; width: 8px; height: 14px; background: var(--blurple); animation: cursor-blink 1.2s ease-in-out infinite; vertical-align: middle; margin-left: 2px; }
+    @keyframes cursor-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    .why-points { display: flex; flex-direction: column; gap: 24px; margin-top: 32px; }
+    .why-point { display: flex; gap: 16px; align-items: flex-start; }
+    .why-point-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; background: rgba(88,101,242,0.1); border: 1px solid rgba(88,101,242,0.2); }
+    .why-point-body h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .why-point-body p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+    /* ============================
+       DOWNLOAD HUB
+    ============================ */
+    #download { padding: 120px 0; background: var(--bg); position: relative; overflow: hidden; }
+    #download::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 400px; background: radial-gradient(ellipse, rgba(88,101,242,0.08) 0%, transparent 70%); pointer-events: none; }
+
+    .download-card {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 28px; padding: 60px;
+      position: relative; overflow: hidden;
+      max-width: 900px; margin: 0 auto;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+    .download-card::before { content: ''; position: absolute; top: -1px; left: 30px; right: 30px; height: 2px; background: linear-gradient(90deg, transparent, var(--blurple), var(--cyan), transparent); border-radius: 0 0 100px 100px; }
+
+    .download-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 48px; gap: 24px; flex-wrap: wrap; }
+    .version-label { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .version-number { font-size: 40px; font-weight: 800; letter-spacing: -0.04em; background: linear-gradient(135deg, #fff, var(--blurple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; margin-bottom: 8px; }
+    .version-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .version-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 100px; }
+    .badge-stable { background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.25); color: #4ade80; }
+    .badge-date { background: rgba(255,255,255,0.06); border: 1px solid var(--border-soft); color: var(--text-muted); }
+
+    .download-checkboxes { display: flex; flex-direction: column; gap: 10px; }
+    .custom-checkbox { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-muted); user-select: none; transition: var(--transition); }
+    .custom-checkbox:hover { color: var(--text); }
+    .custom-checkbox input { display: none; }
+    .checkbox-box { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid rgba(88,101,242,0.4); background: rgba(88,101,242,0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); }
+    .custom-checkbox input:checked + .checkbox-box { background: var(--blurple); border-color: var(--blurple); }
+    .checkbox-check { opacity: 0; transform: scale(0.5); transition: var(--transition); color: #fff; font-size: 11px; font-weight: 800; }
+    .custom-checkbox input:checked + .checkbox-box .checkbox-check { opacity: 1; transform: scale(1); }
+
+    .download-divider { height: 1px; background: var(--border-soft); margin: 40px 0; }
+
+    .download-platforms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .platform-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-soft); border-radius: 16px; padding: 24px; transition: var(--transition); }
+    .platform-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(88,101,242,0.3); transform: translateY(-2px); }
+    .platform-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .platform-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .platform-icon.win { background: rgba(0,120,215,0.15); border: 1px solid rgba(0,120,215,0.25); }
+    .platform-icon.linux { background: rgba(255,200,50,0.1); border: 1px solid rgba(255,200,50,0.2); }
+    .platform-name { font-size: 16px; font-weight: 700; }
+    .platform-arch { font-size: 12px; color: var(--text-muted); }
+    .platform-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; display: flex; gap: 16px; flex-wrap: wrap; }
+    .platform-dl-btn { width: 100%; justify-content: center; padding: 13px; }
+
+    /* ============================
+       FOOTER
+    ============================ */
+    footer { background: var(--bg-2); border-top: 1px solid var(--border-soft); padding: 80px 0 40px; }
+    .footer-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 60px; }
+    .footer-brand .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+    .footer-brand .logo .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--blurple), var(--cyan)); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .footer-brand p { font-size: 14px; color: var(--text-muted); line-height: 1.65; max-width: 260px; margin-bottom: 20px; }
+    .social-links { display: flex; gap: 10px; }
+    .social-link { width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--border-soft); background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center; font-size: 15px; transition: var(--transition); cursor: pointer; color: var(--text-muted); }
+    .social-link:hover { background: rgba(88,101,242,0.15); border-color: rgba(88,101,242,0.3); color: var(--blurple); transform: translateY(-2px); }
+    .footer-col h5 { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-col ul li a { font-size: 14px; color: #666688; transition: var(--transition); display: inline-block; }
+    .footer-col ul li a:hover { color: var(--text); transform: translateX(3px); }
+    .footer-bottom { padding-top: 32px; border-top: 1px solid var(--border-soft); display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    .footer-disclaimer { font-size: 12px; color: #444460; max-width: 560px; line-height: 1.6; }
+    .footer-copy { font-size: 12px; color: #333350; flex-shrink: 0; }
+
+    /* ============================
+       TOAST
+    ============================ */
+    #toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast {
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(15,15,26,0.95);
+      border: 1px solid rgba(88,101,242,0.3);
+      border-radius: 14px; padding: 16px 20px;
+      min-width: 300px; max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+      backdrop-filter: blur(20px);
+      pointer-events: all;
+      animation: toast-in 0.4s cubic-bezier(0.4,0,0.2,1) forwards;
+      position: relative; overflow: hidden;
+    }
+    .toast.hiding { animation: toast-out 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
+    @keyframes toast-in { from { opacity: 0; transform: translateX(20px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
+    @keyframes toast-out { from { opacity: 1; transform: translateX(0) scale(1); } to { opacity: 0; transform: translateX(20px) scale(0.95); } }
+    .toast-icon { width: 36px; height: 36px; border-radius: 10px; background: rgba(88,101,242,0.15); border: 1px solid rgba(88,101,242,0.25); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .toast-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .toast-msg { font-size: 12px; color: var(--text-muted); }
+    .toast-progress { position: absolute; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, var(--blurple), var(--cyan)); border-radius: 0 0 14px 14px; animation: progress-shrink 4s linear forwards; }
+    @keyframes progress-shrink { from { width: 100%; } to { width: 0%; } }
+
+    /* ============================
+       RESPONSIVE
+    ============================ */
+    @media (max-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .footer-top { grid-template-columns: 1fr 1fr; gap: 32px; }
+      .footer-brand { grid-column: 1 / -1; }
+      .specs-container { grid-template-columns: 1fr; }
+      .why-grid { grid-template-columns: 1fr; }
+      .why-visual { order: -1; }
+    }
+    @media (max-width: 768px) {
+      .nav-links, .nav-cta { display: none; }
+      .nav-hamburger { display: flex; }
+      .features-grid { grid-template-columns: 1fr; }
+      .download-card { padding: 36px 24px; }
+      .download-platforms { grid-template-columns: 1fr; }
+      .download-top { flex-direction: column; }
+      .footer-top { grid-template-columns: 1fr 1fr; }
+      .hero-stats { gap: 28px; }
+    }
+    @media (max-width: 480px) {
+      .footer-top { grid-template-columns: 1fr; }
+      .hero-actions .btn { width: 100%; justify-content: center; }
+      .hero-actions { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ======== NAVIGATION ======== -->
+<nav id="navbar">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <div class="logo-icon">&#9889;</div>
+        <span class="gradient-text">ThisCord</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#tech-specs">Tech Specs</a></li>
+        <li><a href="#why-thiscord">Why ThisCord</a></li>
+        <li><a href="#download">Download Now</a></li>
+      </ul>
+      <div class="nav-cta" style="display:flex;gap:10px;align-items:center;">
+        <a href="login.html" class="btn btn-secondary" style="padding:9px 18px;font-size:14px;">Sign In</a>
+        <a href="#download" class="btn btn-primary">Get Started</a>
+      </div>
+      <button class="nav-hamburger" id="hamburger" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#features" class="mnl">Features</a>
+  <a href="#tech-specs" class="mnl">Tech Specs</a>
+  <a href="#why-thiscord" class="mnl">Why ThisCord</a>
+  <a href="#download" class="mnl">Download</a>
+  <a href="#download" class="btn btn-primary mnl">Get Started</a>
+</div>
+
+<!-- ======== HERO ======== -->
+<section id="hero">
+  <canvas id="particle-canvas"></canvas>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+  <div class="hero-grid"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      v1.0.2 Stable &mdash; Now Available
+    </div>
+    <h1 class="hero-title gradient-text">ThisCord</h1>
+    <p class="hero-subtitle">The Discord you actually wanted.</p>
+    <p class="hero-tagline">No telemetry. No bloat. Just pure, fast, customizable communication.</p>
+
+    <div class="hero-actions">
+      <button class="btn btn-primary download-btn" data-platform="Windows x64" data-file="ThisCord-Setup-1.0.2-x64.exe">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+        Download for Windows x64
+      </button>
+      <button class="btn btn-secondary download-btn" data-platform="Linux" data-file="ThisCord-1.0.2.AppImage">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.709-.048 1.39-.94 1.532-1.688l.049-1.32c.057-.42.273-.653.52-.797.16-.094.324-.17.486-.242.007-.003.014-.006.021-.009.24-.11.48-.216.666-.376.33-.29.428-.749.244-1.116l-.007-.014c-.052-.093-.109-.181-.17-.265-.24-.33-.47-.64-.37-1.074.09-.385.57-1.055.66-1.64.048-.312.006-.62-.12-.87a1.39 1.39 0 00-.227-.32c-.085-.09-.17-.177-.246-.275-.296-.386-.428-.92-.428-1.536 0-.656.163-1.415.478-2.137.303-.692.74-1.357 1.246-1.842.28-.264.575-.476.867-.62.292-.143.576-.217.836-.217h.016c.33 0 .633.084.9.25.268.168.494.425.66.763.168.338.28.753.28 1.245 0 .54-.13 1.165-.43 1.826a8.272 8.272 0 01-.22.45c-.1.188-.19.384-.25.578-.073.236-.094.476-.046.7.047.222.17.426.37.594.197.167.454.29.762.358.31.07.672.087 1.073.058a6.36 6.36 0 00.657-.09c.207-.04.414-.09.62-.149.419-.12.84-.268 1.234-.475.391-.207.757-.47 1.08-.792.325-.322.61-.7.852-1.136.24-.436.437-.93.578-1.476.142-.545.222-1.145.222-1.793C24 4.38 19.756.001 14.504 0h-2z"/></svg>
+        Download for Linux
+      </button>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-item"><div class="stat-value">~48MB</div><div class="stat-label">Install Size</div></div>
+      <div class="stat-item"><div class="stat-value">&lt;80ms</div><div class="stat-label">Cold Start</div></div>
+      <div class="stat-item"><div class="stat-value">0</div><div class="stat-label">Telemetry Events</div></div>
+      <div class="stat-item"><div class="stat-value">100%</div><div class="stat-label">Open Source</div></div>
+    </div>
+  </div>
+
+  <div class="scroll-indicator" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    Scroll
+  </div>
+</section>
+
+<!-- ======== FEATURES ======== -->
+<section id="features">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="tag">Core Features</div>
+      <h2>Built different.<br><span class="gradient-text">By design.</span></h2>
+      <p>Every feature exists because it should have been there from the start. No compromises, no surveillance.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon cyan">&#9889;</div>
+        <div class="feature-title">Ultra-Low Latency</div>
+        <div class="feature-desc">Rebuilt audio pipeline using native OS audio APIs. Voice packets are routed with sub-20ms end-to-end latency &mdash; eliminating the buffering overhead baked into stock Discord.</div>
+        <div class="feature-tag">Audio Engine v2</div>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon green">&#128737;</div>
+        <div class="feature-title">Zero Telemetry</div>
+        <div class="feature-desc">Every analytics call, fingerprinting hook, and usage beacon has been surgically removed. Your typing habits, active channels, and hardware profile stay on your machine &mdash; period.</div>
+        <div class="feature-tag">Privacy First</div>
+      </div>
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon purple">&#127912;</div>
+        <div class="feature-title">Custom CSS Injection</div>
+        <div class="feature-desc">A built-in theme engine with live-reload support. Write standard CSS, target any element. Full Stylus/SCSS transpilation pipeline included. Ship themes as single-file bundles.</div>
+        <div class="feature-tag">Theme Engine</div>
+      </div>
+      <div class="feature-card reveal reveal-delay-4">
+        <div class="feature-icon orange">&#129504;</div>
+        <div class="feature-title">Memory Efficiency</div>
+        <div class="feature-desc">60% lower RAM footprint vs. stock Electron builds. Achieved through renderer process consolidation, aggressive lazy-loading, and stripping 34 unused Chromium feature flags.</div>
+        <div class="feature-tag">~120MB Idle</div>
+      </div>
+      <div class="feature-card reveal reveal-delay-5">
+        <div class="feature-icon blurple">&#128268;</div>
+        <div class="feature-title">Plugin Support</div>
+        <div class="feature-desc">A sandboxed plugin runtime with a stable public API. Install from the built-in registry or drop a .tcplugin file into your plugins folder. No CLI, no build step required.</div>
+        <div class="feature-tag">Plugin SDK</div>
+      </div>
+      <div class="feature-card reveal reveal-delay-6">
+        <div class="feature-icon pink">&#127760;</div>
+        <div class="feature-title">Cross-Platform Native</div>
+        <div class="feature-desc">Native builds for Windows 10/11 (x64, arm64) and major Linux distros (Ubuntu, Debian, Fedora). Each build is compiled with platform-specific optimizations &mdash; not just repackaged binaries.</div>
+        <div class="feature-tag">Multi-Platform</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== TECH SPECS ======== -->
+<section id="tech-specs">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="tag">Technical Specifications</div>
+      <h2>Numbers that <span class="gradient-text">actually matter.</span></h2>
+      <p>A side-by-side look at where ThisCord stands versus the default client.</p>
+    </div>
+    <div class="specs-container">
+      <div class="reveal reveal-delay-1">
+        <div class="specs-table-wrap">
+          <div class="specs-table-header">
+            <div>Metric</div>
+            <div>Standard Discord</div>
+            <div class="col-thiscord">ThisCord</div>
+          </div>
+          <div class="specs-row"><div class="specs-cell label">Cold Start Time</div><div class="specs-cell discord-val">~3.2s</div><div class="specs-cell thiscord-val">~74ms</div></div>
+          <div class="specs-row"><div class="specs-cell label">Idle RAM Usage</div><div class="specs-cell discord-val">~310 MB</div><div class="specs-cell thiscord-val">~118 MB</div></div>
+          <div class="specs-row"><div class="specs-cell label">Voice Latency (P50)</div><div class="specs-cell discord-val">~80ms</div><div class="specs-cell thiscord-val">~18ms</div></div>
+          <div class="specs-row"><div class="specs-cell label">Install Size</div><div class="specs-cell discord-val">~310 MB</div><div class="specs-cell thiscord-val">~48 MB</div></div>
+          <div class="specs-row"><div class="specs-cell label">Telemetry Events</div><div class="specs-cell discord-val">Hundreds/session</div><div class="specs-cell thiscord-val">Zero</div></div>
+          <div class="specs-row"><div class="specs-cell label">Custom CSS</div><div class="specs-cell discord-val">&#10007; Not Supported</div><div class="specs-cell thiscord-val">&#10003; Built-in</div></div>
+          <div class="specs-row"><div class="specs-cell label">Plugin API</div><div class="specs-cell discord-val">&#10007; None</div><div class="specs-cell thiscord-val">&#10003; Stable SDK</div></div>
+          <div class="specs-row"><div class="specs-cell label">Update Control</div><div class="specs-cell discord-val">Forced</div><div class="specs-cell thiscord-val">Optional</div></div>
+          <div class="specs-row"><div class="specs-cell label">Crash Reporter</div><div class="specs-cell discord-val">Enabled (remote)</div><div class="specs-cell thiscord-val">Local only</div></div>
+          <div class="specs-row"><div class="specs-cell label">Source Available</div><div class="specs-cell discord-val">&#10007; Closed</div><div class="specs-cell thiscord-val">&#10003; Open Source</div></div>
+        </div>
+      </div>
+      <div class="specs-side reveal reveal-delay-2">
+        <div class="compat-card">
+          <h4>Platform Compatibility</h4>
+          <div class="compat-list">
+            <div class="compat-item">
+              <div class="os-icon win">&#128249;</div>
+              <div><div style="font-size:14px;font-weight:600;">Windows 10 / 11</div><div style="font-size:12px;color:var(--text-muted);">x64 &middot; arm64</div></div>
+              <span class="compat-badge">Supported</span>
+            </div>
+            <div class="compat-item">
+              <div class="os-icon linux">&#128039;</div>
+              <div><div style="font-size:14px;font-weight:600;">Ubuntu / Debian</div><div style="font-size:12px;color:var(--text-muted);">.deb &middot; AppImage &middot; x64</div></div>
+              <span class="compat-badge">Supported</span>
+            </div>
+            <div class="compat-item">
+              <div class="os-icon linux">&#128039;</div>
+              <div><div style="font-size:14px;font-weight:600;">Fedora / RHEL</div><div style="font-size:12px;color:var(--text-muted);">.rpm &middot; AppImage &middot; x64</div></div>
+              <span class="compat-badge">Supported</span>
+            </div>
+          </div>
+        </div>
+        <div class="perf-card">
+          <h4>Performance at a Glance</h4>
+          <div class="perf-bar-group">
+            <div class="perf-bar-item">
+              <div class="perf-bar-label"><span>Startup Speed</span><span>43&times; faster</span></div>
+              <div class="perf-bar-track"><div class="perf-bar-fill cyan" data-width="96"></div></div>
+            </div>
+            <div class="perf-bar-item">
+              <div class="perf-bar-label"><span>RAM Efficiency</span><span>62% less</span></div>
+              <div class="perf-bar-track"><div class="perf-bar-fill blurple" data-width="82"></div></div>
+            </div>
+            <div class="perf-bar-item">
+              <div class="perf-bar-label"><span>Voice Latency</span><span>77% lower</span></div>
+              <div class="perf-bar-track"><div class="perf-bar-fill green" data-width="91"></div></div>
+            </div>
+            <div class="perf-bar-item">
+              <div class="perf-bar-label"><span>Disk Footprint</span><span>85% smaller</span></div>
+              <div class="perf-bar-track"><div class="perf-bar-fill cyan" data-width="88"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="compat-card">
+          <h4>Runtime Requirements</h4>
+          <div class="compat-list">
+            <div class="compat-item" style="gap:8px;"><span style="font-size:18px;">&#128187;</span><div><div style="font-size:13px;color:var(--text-muted);">Minimum RAM</div><div style="font-size:14px;font-weight:600;">512 MB</div></div></div>
+            <div class="compat-item" style="gap:8px;"><span style="font-size:18px;">&#128230;</span><div><div style="font-size:13px;color:var(--text-muted);">Disk Space</div><div style="font-size:14px;font-weight:600;">120 MB installed</div></div></div>
+            <div class="compat-item" style="gap:8px;"><span style="font-size:18px;">&#128268;</span><div><div style="font-size:13px;color:var(--text-muted);">Internet Required</div><div style="font-size:14px;font-weight:600;">For voice / messaging only</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== WHY THISCORD ======== -->
+<section id="why-thiscord">
+  <div class="container">
+    <div class="why-grid">
+      <div class="why-content reveal">
+        <div class="tag">Why ThisCord</div>
+        <h2 style="font-size:clamp(32px,4vw,52px);font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-bottom:16px;">Your client.<br><span class="gradient-text">Your rules.</span></h2>
+        <p style="color:var(--text-muted);font-size:16px;line-height:1.7;">The official Discord client ships with tracking, forced updates, and a locked-down environment. ThisCord gives power users, developers, and privacy advocates the client they deserve.</p>
+        <div class="why-points">
+          <div class="why-point">
+            <div class="why-point-icon">&#128274;</div>
+            <div class="why-point-body">
+              <h4>Privacy by Architecture</h4>
+              <p>Network calls are auditable. No hidden endpoints, no obfuscated JS. Every request is logged in the dev console so you know exactly what leaves your machine.</p>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="why-point-icon">&#9881;</div>
+            <div class="why-point-body">
+              <h4>Developer-Grade Tooling</h4>
+              <p>Full DevTools access in production, hot-reload for custom CSS, and a plugin SDK with TypeScript typings. Build your own features in an afternoon.</p>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="why-point-icon">&#128640;</div>
+            <div class="why-point-body">
+              <h4>Performance Without Trade-offs</h4>
+              <p>Native audio APIs, stripped Chromium flags, and a lean renderer process. Everything that doesn't serve you has been removed &mdash; not hidden behind a setting.</p>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="why-point-icon">&#127757;</div>
+            <div class="why-point-body">
+              <h4>Community Driven</h4>
+              <p>No corporate roadmap. Features are built by users, for users. Submit a PR, open an issue, or join the community &mdash; your voice shapes the next release.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="why-visual reveal reveal-delay-2">
+        <div class="why-terminal">
+          <div class="terminal-bar">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+            <span class="terminal-title">thiscord &mdash; zsh</span>
+          </div>
+          <div class="terminal-body">
+            <div class="t-comment"># Installing ThisCord on Ubuntu</div><br>
+            <div><span class="t-prompt">~ $</span> <span class="t-cmd">curl -fsSL https://thiscord.app/install.sh | bash</span></div>
+            <div class="t-output">&nbsp;&nbsp;Fetching latest release...</div>
+            <div class="t-output">&nbsp;&nbsp;Verifying checksum (SHA-256)... <span class="t-success">&#10003;</span></div>
+            <div class="t-output">&nbsp;&nbsp;Installing to /usr/local/bin/thiscord</div>
+            <div class="t-success">&nbsp;&nbsp;Done! ThisCord v1.0.2 installed.</div><br>
+            <div><span class="t-prompt">~ $</span> <span class="t-cmd">thiscord --version</span></div>
+            <div class="t-cyan">&nbsp;&nbsp;ThisCord v1.0.2-stable (Electron 31 / Chromium 124)</div>
+            <div class="t-output">&nbsp;&nbsp;Telemetry: <span class="t-success">disabled</span> &nbsp;|&nbsp; Plugins: <span class="t-success">enabled</span></div><br>
+            <div><span class="t-prompt">~ $</span> <span class="t-cmd">thiscord --plugin list</span></div>
+            <div class="t-output">&nbsp;&nbsp;[&#10003;] BetterEmoji &nbsp;&nbsp;&nbsp;&nbsp;v2.1.0</div>
+            <div class="t-output">&nbsp;&nbsp;[&#10003;] NoTrack &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v1.4.2</div>
+            <div class="t-output">&nbsp;&nbsp;[&#10003;] CustomStatus &nbsp;&nbsp;v3.0.1</div><br>
+            <div><span class="t-prompt">~ $</span> <span class="t-cursor"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== DOWNLOAD HUB ======== -->
+<section id="download">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="tag">Download Now</div>
+      <h2>Ready when <span class="gradient-text">you are.</span></h2>
+      <p>Stable, signed builds for Windows and Linux. No account required to download.</p>
+    </div>
+
+    <div class="download-card reveal reveal-delay-1">
+      <div class="download-top">
+        <div>
+          <div class="version-label">Current Release</div>
+          <div class="version-number">v1.0.2</div>
+          <div class="version-badges">
+            <span class="version-badge badge-stable">
+              <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg>
+              Stable
+            </span>
+            <span class="version-badge badge-date">Released March 28, 2026</span>
+          </div>
+        </div>
+        <div class="download-checkboxes">
+          <label class="custom-checkbox"><input type="checkbox" checked /><div class="checkbox-box"><span class="checkbox-check">&#10003;</span></div>Create desktop shortcut</label>
+          <label class="custom-checkbox"><input type="checkbox" checked /><div class="checkbox-box"><span class="checkbox-check">&#10003;</span></div>Enable auto-update notifications</label>
+          <label class="custom-checkbox"><input type="checkbox" /><div class="checkbox-box"><span class="checkbox-check">&#10003;</span></div>Launch on system startup</label>
+          <label class="custom-checkbox"><input type="checkbox" /><div class="checkbox-box"><span class="checkbox-check">&#10003;</span></div>Install default plugin pack</label>
+        </div>
+      </div>
+
+      <div class="download-divider"></div>
+
+      <div class="download-platforms">
+        <div class="platform-card">
+          <div class="platform-header">
+            <div class="platform-icon win">&#128249;</div>
+            <div><div class="platform-name">Windows x64</div><div class="platform-arch">x64 &middot; Windows 10 or later</div></div>
+          </div>
+          <div class="platform-meta"><span>&#128230; 47.2 MB</span><span>&#128272; Code Signed</span><span>&#9889; .exe</span></div>
+          <button class="btn btn-primary platform-dl-btn download-btn" data-platform="Windows x64" data-file="ThisCord-Setup-1.0.2-x64.exe">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download .exe
+          </button>
+        </div>
+        <div class="platform-card">
+          <div class="platform-header">
+            <div class="platform-icon win">&#128249;</div>
+            <div><div class="platform-name">Windows ARM</div><div class="platform-arch">arm64 &middot; Windows 11 or later</div></div>
+          </div>
+          <div class="platform-meta"><span>&#128230; 45.8 MB</span><span>&#128272; Code Signed</span><span>&#9889; .exe</span></div>
+          <button class="btn btn-secondary platform-dl-btn download-btn" data-platform="Windows ARM64" data-file="ThisCord-Setup-1.0.2-arm64.exe">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download .exe
+          </button>
+        </div>
+        <div class="platform-card">
+          <div class="platform-header">
+            <div class="platform-icon linux">&#128039;</div>
+            <div><div class="platform-name">Linux AppImage</div><div class="platform-arch">x64 &middot; Universal (all distros)</div></div>
+          </div>
+          <div class="platform-meta"><span>&#128230; 51.4 MB</span><span>&#128272; GPG Signed</span><span>&#9889; Portable</span></div>
+          <button class="btn btn-cyan platform-dl-btn download-btn" data-platform="Linux AppImage" data-file="ThisCord-1.0.2.AppImage">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download AppImage
+          </button>
+        </div>
+        <div class="platform-card">
+          <div class="platform-header">
+            <div class="platform-icon linux">&#128039;</div>
+            <div><div class="platform-name">Linux Package</div><div class="platform-arch">.deb / .rpm &middot; Ubuntu, Fedora</div></div>
+          </div>
+          <div class="platform-meta"><span>&#128230; 48.9 MB</span><span>&#128272; GPG Signed</span><span>&#9889; Native pkg</span></div>
+          <button class="btn btn-secondary platform-dl-btn download-btn" data-platform="Linux .deb/.rpm" data-file="ThisCord-1.0.2.deb">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download .deb / .rpm
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-top:32px;padding:16px 20px;background:rgba(255,255,255,0.02);border:1px solid var(--border-soft);border-radius:12px;font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:16px;">&#128272;</span>
+        All builds are SHA-256 checksummed and code-signed. Verify your download:&nbsp;<code style="color:var(--cyan);font-size:12px;font-family:monospace;">sha256sum ThisCord-Setup-1.0.2-x64.exe</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== FOOTER ======== -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo">
+          <div class="logo-icon">&#9889;</div>
+          <span class="gradient-text">ThisCord</span>
+        </div>
+        <p>An open-source Discord client built for performance, privacy, and customization. No tracking. No compromise.</p>
+        <div class="social-links">
+          <div class="social-link" title="GitHub">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </div>
+          <div class="social-link" title="Discord">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.09.12 18.12.136 18.14a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+          </div>
+          <div class="social-link" title="X / Twitter">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </div>
+          <div class="social-link" title="Reddit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h5>Resources</h5>
+        <ul>
+          <li><a href="#">Documentation</a></li>
+          <li><a href="#">Plugin SDK</a></li>
+          <li><a href="#">Theme Guide</a></li>
+          <li><a href="#">Changelog</a></li>
+          <li><a href="#">Roadmap</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Community</h5>
+        <ul>
+          <li><a href="#">Discord Server</a></li>
+          <li><a href="#">GitHub Discussions</a></li>
+          <li><a href="#">Plugin Registry</a></li>
+          <li><a href="#">Theme Showcase</a></li>
+          <li><a href="#">Contributing</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Legal</h5>
+        <ul>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+          <li><a href="#">License (MIT)</a></li>
+          <li><a href="#">DMCA Policy</a></li>
+          <li><a href="#">Security</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Social</h5>
+        <ul>
+          <li><a href="#">GitHub</a></li>
+          <li><a href="#">Twitter / X</a></li>
+          <li><a href="#">Reddit</a></li>
+          <li><a href="#">Mastodon</a></li>
+          <li><a href="#">YouTube</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-disclaimer">
+        ThisCord is an independent open-source project and is <strong>not affiliated with, endorsed by, or connected to Discord Inc.</strong> in any way. "Discord" is a registered trademark of Discord Inc. ThisCord does not modify Discord's servers or violate their API Terms of Service.
+      </p>
+      <p class="footer-copy">&copy; 2026 ThisCord Project. MIT License.</p>
+    </div>
+  </div>
+</footer>
+
+<div id="toast-container"></div>
+
+<script>
+  // Register service worker to bypass ngrok warning on future visits
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+</script>
+
+<script>
+  // Navbar scroll effect
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // Mobile hamburger menu
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobile-menu');
+  let menuOpen = false;
+  hamburger.addEventListener('click', () => {
+    menuOpen = !menuOpen;
+    mobileMenu.classList.toggle('open', menuOpen);
+    const spans = hamburger.querySelectorAll('span');
+    spans[0].style.transform = menuOpen ? 'rotate(45deg) translate(5px,5px)' : '';
+    spans[1].style.opacity = menuOpen ? '0' : '1';
+    spans[2].style.transform = menuOpen ? 'rotate(-45deg) translate(5px,-5px)' : '';
+  });
+  document.querySelectorAll('.mnl').forEach(link => {
+    link.addEventListener('click', () => {
+      menuOpen = false;
+      mobileMenu.classList.remove('open');
+      hamburger.querySelectorAll('span').forEach(s => { s.style.transform = ''; s.style.opacity = '1'; });
+    });
+  });
+
+  // Scroll reveal
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.classList.add('visible'); revealObserver.unobserve(entry.target); }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  // Animated performance bars
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.perf-bar-fill').forEach(bar => {
+          setTimeout(() => { bar.style.width = bar.dataset.width + '%'; }, 200);
+        });
+        barObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.perf-card').forEach(el => barObserver.observe(el));
+
+  // Toast notification
+  function showToast(platform, filename) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML =
+      '<div class="toast-icon">&#8659;</div>' +
+      '<div class="toast-body">' +
+        '<div class="toast-title">Starting Download...</div>' +
+        '<div class="toast-msg">' + filename + ' &mdash; ' + platform + '</div>' +
+      '</div>' +
+      '<div class="toast-progress"></div>';
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('hiding');
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
+  }
+
+  // Download button clicks
+  document.querySelectorAll('.download-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const platform = btn.dataset.platform || 'Unknown Platform';
+      const file = btn.dataset.file || 'ThisCord-Setup.exe';
+      showToast(platform, file);
+      const original = btn.innerHTML;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Starting...';
+      btn.disabled = true;
+      setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 3000);
+    });
+  });
+
+  // Particle canvas
+  (function() {
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [];
+    const COLORS = ['rgba(88,101,242,', 'rgba(0,212,255,', 'rgba(167,139,250,'];
+
+    function resize() {
+      W = canvas.width = canvas.offsetWidth;
+      H = canvas.height = canvas.offsetHeight;
+    }
+
+    function Particle() {
+      this.reset = function() {
+        this.x = Math.random() * W;
+        this.y = Math.random() * H;
+        this.r = Math.random() * 1.5 + 0.3;
+        this.vx = (Math.random() - 0.5) * 0.3;
+        this.vy = (Math.random() - 0.5) * 0.3;
+        this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        this.alpha = Math.random() * 0.5 + 0.1;
+        this.life = Math.random() * 200 + 100;
+        this.age = 0;
+      };
+      this.reset();
+    }
+
+    for (let i = 0; i < 120; i++) {
+      const p = new Particle();
+      p.age = Math.floor(Math.random() * p.life);
+      particles.push(p);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.age++;
+        const alpha = p.alpha * Math.sin((p.age / p.life) * Math.PI);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + alpha + ')';
+        ctx.fill();
+        if (p.age >= p.life || p.x < 0 || p.x > W || p.y < 0 || p.y > H) p.reset();
+      });
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    draw();
+    window.addEventListener('resize', resize, { passive: true });
+  })();
+
+  // Smooth scroll with nav offset
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href');
+      const target = document.querySelector(id);
+      if (target) {
+        e.preventDefault();
+        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+      }
+    });
+  });
+</script>
+</body>
+</html>

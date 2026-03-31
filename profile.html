@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile — ThisCord</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #050505; --bg-2: #0a0a0f; --bg-card: #0f0f18;
+      --blurple: #5865F2; --cyan: #00d4ff;
+      --text: #e8e8f0; --text-muted: #8888aa;
+      --border: rgba(255,255,255,0.06);
+    }
+    body { font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased; }
+    a { color:inherit; text-decoration:none; }
+    nav {
+      position:sticky;top:0;z-index:100;
+      background:rgba(5,5,5,0.85);border-bottom:1px solid var(--border);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    }
+    .nav-inner { max-width:1100px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between; }
+    .nav-logo { display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;letter-spacing:-0.04em; }
+    .nav-logo .logo-icon { width:30px;height:30px;background:linear-gradient(135deg,var(--blurple),var(--cyan));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 14px rgba(88,101,242,0.4); }
+    .logo-text { background:linear-gradient(135deg,#fff,var(--blurple) 60%,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .nav-actions { display:flex;align-items:center;gap:10px; }
+    .btn { display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all 0.25s;font-family:inherit;text-decoration:none; }
+    .btn-ghost { background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid var(--border); }
+    .btn-ghost:hover { background:rgba(255,255,255,0.09);color:var(--text); }
+    .btn-danger { background:rgba(255,70,70,0.1);color:#ff8888;border:1px solid rgba(255,70,70,0.2); }
+    .btn-danger:hover { background:rgba(255,70,70,0.18); }
+    main { max-width:1100px;margin:0 auto;padding:48px 24px 80px;opacity:0;transition:opacity 0.4s ease; }
+    .profile-hero {
+      display:flex;align-items:center;gap:28px;padding:40px;
+      background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:22px;margin-bottom:28px;
+      position:relative;overflow:hidden;flex-wrap:wrap;
+    }
+    .profile-hero::before { content:'';position:absolute;top:-1px;left:28px;right:28px;height:2px;background:linear-gradient(90deg,transparent,var(--blurple),var(--cyan),transparent);border-radius:0 0 100px 100px; }
+    .profile-hero::after { content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 10% 50%,rgba(88,101,242,0.06) 0%,transparent 70%);pointer-events:none; }
+    .avatar-wrap { position:relative;flex-shrink:0; }
+    .avatar {
+      width:88px;height:88px;border-radius:50%;
+      background:linear-gradient(135deg,var(--blurple),var(--cyan));
+      display:flex;align-items:center;justify-content:center;
+      font-size:36px;font-weight:800;
+      box-shadow:0 0 0 3px rgba(88,101,242,0.3),0 8px 32px rgba(0,0,0,0.4);
+      overflow:hidden;
+    }
+    .avatar img { width:100%;height:100%;object-fit:cover; }
+    .avatar-ring {
+      position:absolute;inset:-4px;border-radius:50%;border:2px solid transparent;
+      background:linear-gradient(135deg,var(--blurple),var(--cyan)) border-box;
+      -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+      -webkit-mask-composite:destination-out;mask-composite:exclude;
+    }
+    .online-dot { position:absolute;bottom:4px;right:4px;width:18px;height:18px;border-radius:50%;background:#4ade80;border:3px solid var(--bg);box-shadow:0 0 10px rgba(74,222,128,0.5); }
+    .profile-info { flex:1;min-width:0; }
+    .profile-name { font-size:28px;font-weight:800;letter-spacing:-0.03em;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .profile-meta { display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px; }
+    .profile-email { font-size:14px;color:var(--text-muted); }
+    .provider-pill { display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;font-size:12px;font-weight:600; }
+    .pill-google { background:rgba(66,133,244,0.15);border:1px solid rgba(66,133,244,0.25);color:#7ab3ff; }
+    .pill-github { background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:#ccc; }
+    .profile-stats { display:flex;gap:24px;flex-wrap:wrap; }
+    .stat-val { font-size:18px;font-weight:700;letter-spacing:-0.03em; }
+    .stat-key { font-size:11px;color:var(--text-muted);font-weight:500;margin-top:2px; }
+    .grid { display:grid;grid-template-columns:repeat(3,1fr);gap:20px; }
+    .info-card { background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:28px;transition:border-color 0.25s; }
+    .info-card:hover { border-color:rgba(88,101,242,0.25); }
+    .card-label { font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;display:flex;align-items:center;gap:8px; }
+    .info-row { display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:14px; }
+    .info-row:last-child { border-bottom:none;padding-bottom:0; }
+    .info-key { color:var(--text-muted);font-weight:500; }
+    .info-val { color:var(--text);font-weight:600;text-align:right;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .info-val.green { color:#4ade80; }
+    .info-val.cyan { color:var(--cyan); }
+    .provider-row { display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04); }
+    .provider-row:last-child { border-bottom:none;padding-bottom:0; }
+    .provider-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0; }
+    .provider-icon.google { background:rgba(66,133,244,0.12);border:1px solid rgba(66,133,244,0.2); }
+    .provider-icon.github { background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1); }
+    .provider-name { font-size:14px;font-weight:600; }
+    .provider-sub { font-size:12px;color:var(--text-muted); }
+    .pstatus { margin-left:auto;font-size:12px;font-weight:600;padding:3px 10px;border-radius:100px; }
+    .pstatus.on { background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.2);color:#4ade80; }
+    .pstatus.off { background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text-muted); }
+    .coming-soon-card {
+      grid-column:1/-1;background:var(--bg-card);border:1px solid var(--border);
+      border-radius:18px;padding:48px;text-align:center;position:relative;overflow:hidden;
+    }
+    .coming-soon-card::before { content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(88,101,242,0.05) 0%,transparent 70%);pointer-events:none; }
+    .coming-soon-icon { font-size:48px;margin-bottom:16px;display:block; }
+    .coming-soon-card h2 { font-size:22px;font-weight:700;margin-bottom:8px;letter-spacing:-0.03em; }
+    .coming-soon-card p { color:var(--text-muted);font-size:15px;max-width:440px;margin:0 auto;line-height:1.6; }
+    .progress-wrap { margin:24px auto 0;max-width:320px; }
+    .progress-label { display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500; }
+    .progress-track { height:6px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden; }
+    .progress-fill { height:100%;border-radius:100px;background:linear-gradient(90deg,var(--blurple),var(--cyan));width:0;transition:width 1.5s cubic-bezier(0.4,0,0.2,1); }
+    @media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.grid{grid-template-columns:1fr}.profile-hero{flex-direction:column;align-items:flex-start}}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">&#9889;</div>
+      <span class="logo-text">ThisCord</span>
+    </a>
+    <div class="nav-actions">
+      <a href="index.html" class="btn btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+      <button id="logout-btn" class="btn btn-danger">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign out
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+  <div class="profile-hero">
+    <div class="avatar-wrap">
+      <div class="avatar" id="avatar-el"><span id="avatar-initials">?</span></div>
+      <div class="avatar-ring"></div>
+      <div class="online-dot"></div>
+    </div>
+    <div class="profile-info">
+      <div class="profile-name" id="display-name">Loading...</div>
+      <div class="profile-meta">
+        <span class="profile-email" id="user-email"></span>
+        <span class="provider-pill" id="provider-pill"></span>
+      </div>
+      <div class="profile-stats">
+        <div class="stat"><div class="stat-val" id="joined-date">—</div><div class="stat-key">Member since</div></div>
+        <div class="stat"><div class="stat-val" id="last-login">—</div><div class="stat-key">Last sign in</div></div>
+        <div class="stat"><div class="stat-val" style="color:var(--cyan)">v1.0.2</div><div class="stat-key">App version</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Account Info -->
+    <div class="info-card">
+      <div class="card-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Account Info
+      </div>
+      <div class="info-row"><span class="info-key">User ID</span><span class="info-val cyan" id="user-id">—</span></div>
+      <div class="info-row"><span class="info-key">Display name</span><span class="info-val" id="info-name">—</span></div>
+      <div class="info-row"><span class="info-key">Email</span><span class="info-val" id="info-email">—</span></div>
+      <div class="info-row"><span class="info-key">Username</span><span class="info-val" id="info-username">—</span></div>
+      <div class="info-row"><span class="info-key">Status</span><span class="info-val green">Active</span></div>
+    </div>
+
+    <!-- Connected Providers -->
+    <div class="info-card">
+      <div class="card-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+        Connected Accounts
+      </div>
+      <div class="provider-row">
+        <div class="provider-icon google">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        </div>
+        <div><div class="provider-name">Google</div><div class="provider-sub" id="google-sub">—</div></div>
+        <span class="pstatus" id="google-status">—</span>
+      </div>
+      <div class="provider-row">
+        <div class="provider-icon github">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        </div>
+        <div><div class="provider-name">GitHub</div><div class="provider-sub" id="github-sub">—</div></div>
+        <span class="pstatus" id="github-status">—</span>
+      </div>
+    </div>
+
+    <!-- Privacy -->
+    <div class="info-card">
+      <div class="card-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Privacy &amp; Security
+      </div>
+      <div class="info-row"><span class="info-key">Telemetry</span><span class="info-val green">Disabled</span></div>
+      <div class="info-row"><span class="info-key">Crash reports</span><span class="info-val green">Local only</span></div>
+      <div class="info-row"><span class="info-key">Data stored</span><span class="info-val">Profile only</span></div>
+      <div class="info-row"><span class="info-key">Password</span><span class="info-val">None (OAuth)</span></div>
+      <div class="info-row"><span class="info-key">Session</span><span class="info-val cyan">Encrypted</span></div>
+    </div>
+
+    <!-- Coming Soon -->
+    <div class="info-card coming-soon-card">
+      <span class="coming-soon-icon">&#9889;</span>
+      <h2>The app is coming.</h2>
+      <p>You&rsquo;re signed in and your account is ready. The main ThisCord application is currently in active development.</p>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Development progress</span><span>38%</span></div>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function fmt(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+  }
+  function initials(name) {
+    if (!name) return '?';
+    return name.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+  }
+
+  sb.auth.getUser().then(({ data: { user }, error }) => {
+    if (error || !user) { window.location.href = 'login.html'; return; }
+
+    const meta     = user.user_metadata || {};
+    const provider = user.app_metadata?.provider || 'unknown';
+    const name     = meta.full_name || meta.name || meta.user_name || user.email?.split('@')[0] || 'User';
+    const avatar   = meta.avatar_url;
+    const email    = user.email || meta.email;
+    const username = meta.user_name || meta.preferred_username || null;
+
+    // Avatar
+    const avatarEl = document.getElementById('avatar-el');
+    if (avatar) {
+      avatarEl.innerHTML = `<img src="${avatar}" alt="${name}" />`;
+    } else {
+      document.getElementById('avatar-initials').textContent = initials(name);
+    }
+
+    // Hero
+    document.getElementById('display-name').textContent = name;
+    document.getElementById('user-email').textContent = email || '';
+    document.getElementById('joined-date').textContent = fmt(user.created_at);
+    document.getElementById('last-login').textContent = fmt(user.last_sign_in_at);
+
+    // Provider pill
+    const pill = document.getElementById('provider-pill');
+    if (provider === 'google') {
+      pill.textContent = 'Google account';
+      pill.className = 'provider-pill pill-google';
+    } else if (provider === 'github') {
+      pill.textContent = 'GitHub account';
+      pill.className = 'provider-pill pill-github';
+    }
+
+    // Info card
+    document.getElementById('user-id').textContent = '#' + user.id.slice(0,8).toUpperCase();
+    document.getElementById('info-name').textContent = name;
+    document.getElementById('info-email').textContent = email || 'Not provided';
+    document.getElementById('info-username').textContent = username ? '@' + username : '—';
+
+    // Provider status
+    const identities = user.identities || [];
+    const hasGoogle = identities.some(i => i.provider === 'google');
+    const hasGitHub = identities.some(i => i.provider === 'github');
+
+    const gs = document.getElementById('google-status');
+    const gh = document.getElementById('github-status');
+    if (hasGoogle) {
+      gs.textContent = 'Connected'; gs.className = 'pstatus on';
+      document.getElementById('google-sub').textContent = email || 'Connected';
+    } else {
+      gs.textContent = 'Not linked'; gs.className = 'pstatus off';
+      document.getElementById('google-sub').textContent = 'Not linked';
+    }
+    if (hasGitHub) {
+      gh.textContent = 'Connected'; gh.className = 'pstatus on';
+      document.getElementById('github-sub').textContent = username ? '@' + username : 'Connected';
+    } else {
+      gh.textContent = 'Not linked'; gh.className = 'pstatus off';
+      document.getElementById('github-sub').textContent = 'Not linked';
+    }
+
+    document.title = name + ' — ThisCord';
+    document.getElementById('main').style.opacity = '1';
+    setTimeout(() => { document.getElementById('progress-fill').style.width = '38%'; }, 600);
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await sb.auth.signOut();
+    window.location.href = 'login.html';
+  });
+</script>
+</body>
+</html>
