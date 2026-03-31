@@ -217,8 +217,11 @@
       const fromApp   = urlParams.get('app') === '1';
 
       function getRedirectTo() {
-        // When opened from the Electron app, redirect back into it via custom protocol
-        if (fromApp) return 'thiscord://auth/callback';
+        if (fromApp) {
+          // Use profile.html?app=1 as the intermediate — it's already in Supabase's
+          // allowed redirect URLs, and profile.html will forward the token to the app.
+          return 'https://welias123.github.io/thiscord/profile.html?app=1';
+        }
         return window.location.href.replace(/\/[^/]*$/, '/profile.html');
       }
 

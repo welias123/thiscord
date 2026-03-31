@@ -209,6 +209,28 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 <script>
+  // ── Electron app deep-link handoff ────────────────────────────────────────
+  // When login.html opens with ?app=1, it sets redirectTo=profile.html?app=1.
+  // After OAuth Supabase lands here with the token in the URL hash.
+  // We immediately forward it to the app via thiscord:// and stop rendering.
+  (function() {
+    const params = new URLSearchParams(location.search);
+    if (params.get('app') === '1') {
+      const hash = location.hash.slice(1); // e.g. access_token=...&refresh_token=...
+      if (hash && hash.includes('access_token')) {
+        // Hand the token to the Electron app
+        window.location.href = 'thiscord://auth/callback#' + hash;
+        // Prevent the rest of the page from running
+        document.addEventListener('DOMContentLoaded', function(e) { e.stopImmediatePropagation(); });
+        throw new Error('Redirecting to app'); // halt script execution
+      } else {
+        // app=1 but no token yet — go back to login
+        window.location.href = 'login.html?app=1';
+      }
+    }
+  })();
+  // ─────────────────────────────────────────────────────────────────────────
+
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   function fmt(d) {
