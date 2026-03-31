@@ -201,20 +201,72 @@
     if (configured) {
       const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // If already signed in, go to profile
-      sb.auth.getSession().then(({ data: { session } }) => {
-        if (session) window.location.href = 'profile.html';
-      });
+      const urlParams = new URLSearchParams(location.search);
+      const fromApp   = urlParams.get('app') === '1';
 
-      // Handle redirect back from OAuth
-      sb.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' && session) {
+      // If already signed in
+      sb.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return;
+        if (fromApp) {
+          showAppAuthPrompt(session); // show Authorize / Cancel instead of Google screen
+        } else {
           window.location.href = 'profile.html';
         }
       });
 
-      const urlParams = new URLSearchParams(location.search);
-      const fromApp   = urlParams.get('app') === '1';
+      function showAppAuthPrompt(session) {
+        const user = session.user;
+        const meta = user.user_metadata || {};
+        const name = meta.full_name || meta.name || meta.user_name || user.email?.split('@')[0] || 'User';
+        const avatar = meta.avatar_url;
+
+        document.querySelector('h1').textContent = 'Authorize ThisCord';
+        document.querySelector('.subtitle').textContent = 'The desktop app wants to sign you in.';
+        document.querySelector('.divider').style.display = 'none';
+        document.getElementById('btn-google').style.display = 'none';
+        document.getElementById('btn-github').style.display = 'none';
+
+        const footer = document.querySelector('.footer');
+        const authBlock = document.createElement('div');
+        authBlock.innerHTML = `
+          <div style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;margin-bottom:20px;">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#5865F2,#00d4ff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;overflow:hidden;flex-shrink:0;">
+              ${avatar ? `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : name[0].toUpperCase()}
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#e8e8f0;">${name}</div>
+              <div style="font-size:12px;color:#8888aa;">${user.email || ''}</div>
+            </div>
+          </div>
+          <div style="margin-bottom:20px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555577;margin-bottom:10px;">ThisCord Desktop will be able to:</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#8888aa;"><span style="color:#4ade80;font-size:15px;">✓</span>Access your profile name and avatar</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#8888aa;"><span style="color:#4ade80;font-size:15px;">✓</span>Send and receive encrypted messages</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#8888aa;"><span style="color:#4ade80;font-size:15px;">✓</span>Join voice channels and screen share</div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#8888aa;"><span style="color:#ff6666;font-size:15px;">✗</span>Your password is never shared</div>
+            </div>
+          </div>
+          <button id="authorize-btn" style="width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#5865F2,#00d4ff);color:#fff;font-family:inherit;margin-bottom:10px;transition:opacity 0.2s;">Authorize ThisCord</button>
+          <button id="deny-btn" style="width:100%;padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#8888aa;font-family:inherit;">Cancel</button>
+        `;
+        footer.parentNode.insertBefore(authBlock, footer);
+
+        document.getElementById('authorize-btn').addEventListener('click', () => {
+          const hash = `access_token=${session.access_token}&refresh_token=${session.refresh_token}&expires_in=${session.expires_in || 3600}&token_type=bearer`;
+          window.location.href = 'thiscord://auth/callback#' + hash;
+        });
+        document.getElementById('deny-btn').addEventListener('click', () => {
+          window.location.href = 'profile.html';
+        });
+      }
+
+      // Handle redirect back from fresh OAuth
+      sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session && !fromApp) {
+          window.location.href = 'profile.html';
+        }
+      });
 
       function getRedirectTo() {
         if (fromApp) {
@@ -224,14 +276,6 @@
         }
         return window.location.href.replace(/\/[^/]*$/, '/profile.html');
       }
-
-      // Override auth state handler: if from app, don't redirect to profile.html
-      sb.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' && session && !fromApp) {
-          window.location.href = 'profile.html';
-        }
-        // If fromApp, Supabase already redirected the browser to thiscord://auth/callback
-      });
 
       document.getElementById('btn-google').addEventListener('click', function() {
         this.classList.add('loading');
