@@ -213,9 +213,22 @@
         }
       });
 
+      const urlParams = new URLSearchParams(location.search);
+      const fromApp   = urlParams.get('app') === '1';
+
       function getRedirectTo() {
+        // When opened from the Electron app, redirect back into it via custom protocol
+        if (fromApp) return 'thiscord://auth/callback';
         return window.location.href.replace(/\/[^/]*$/, '/profile.html');
       }
+
+      // Override auth state handler: if from app, don't redirect to profile.html
+      sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session && !fromApp) {
+          window.location.href = 'profile.html';
+        }
+        // If fromApp, Supabase already redirected the browser to thiscord://auth/callback
+      });
 
       document.getElementById('btn-google').addEventListener('click', function() {
         this.classList.add('loading');
@@ -226,6 +239,13 @@
         this.classList.add('loading');
         sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: getRedirectTo() } });
       });
+
+      // Auto-trigger OAuth if the app passed a provider in the URL
+      if (fromApp) {
+        const provider = urlParams.get('provider');
+        if (provider === 'google') document.getElementById('btn-google').click();
+        else if (provider === 'github') document.getElementById('btn-github').click();
+      }
     }
   </script>
 </body>
