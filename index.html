@@ -1052,7 +1052,7 @@
 
       // Trigger actual download from GitHub Releases
       const a = document.createElement('a');
-      a.href = GH_RELEASE_BASE + encodeURIComponent(file);
+      a.href = GH_RELEASE_BASE + file;
       a.download = file;
       a.style.display = 'none';
       document.body.appendChild(a);
